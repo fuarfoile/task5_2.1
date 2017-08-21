@@ -41,6 +41,7 @@ public class Main {
         boolean findFlag = false;
         try {
             for (String str : task.get()) {
+                System.out.println(str);
                 findFlag = true;
             }
         } catch (ExecutionException | InterruptedException e) {
@@ -77,7 +78,7 @@ class TokensRemover implements Callable<String[]>{
                     results.add(task);
                     new Thread(task).start();
                 } else if (searchAndRemove(file)){
-                    resultArray.add(file.getName());
+                    resultArray.add(file.getPath());
                 }
             }
 
@@ -96,41 +97,42 @@ class TokensRemover implements Callable<String[]>{
 
     boolean searchAndRemove(File file){
         boolean findFlag = false;
+        StringBuilder text = new StringBuilder();
 
         try (Scanner fin = new Scanner(new FileInputStream(file))){
-            StringBuilder text = new StringBuilder();
 
             while (fin.hasNextLine()){
                 text.append("\n" + fin.nextLine());
             }
-
-            String tokens[] = Pattern.compile("[ ,!;.\n]").split(text);
-
-            int prevIndex = 0;
-            for (String token : tokens) {
-                if(token.length() >= tokenSizeFrom && token.length() <= tokenSizeTo) {
-                    int index = text.indexOf(token, prevIndex);
-                    text.replace(index, index + token.length(), "");
-                    prevIndex = index;
-                    findFlag = true;
-                } else {
-                    prevIndex += token.length();
-                }
+            if (text.length() > 0) {
+                text.deleteCharAt(0);
             }
-
-            if (findFlag){
-                System.out.println(file.getPath());
-                File outFile = new File(file.getPath());
-                if (outFile.createNewFile()) {
-                    BufferedWriter fout = new BufferedWriter(new FileWriter(outFile));
-                    fout.write(text.toString());
-                    fout.flush();
-                    fout.close();
-                }
-            }
-
         } catch (IOException e){
             e.printStackTrace();
+        }
+
+        String tokens[] = Pattern.compile("[ ,!;.\n]").split(text);
+
+        int prevIndex = 0;
+        for (String token : tokens) {
+            if(token.length() >= tokenSizeFrom && token.length() <= tokenSizeTo) {
+                int index = text.indexOf(token, prevIndex);
+                text.delete(index, index + token.length());
+                prevIndex = index;
+                findFlag = true;
+            } else {
+                prevIndex += token.length();
+            }
+        }
+
+        if (findFlag){
+            File outFile = new File(file.getPath());
+            try (BufferedWriter fout = new BufferedWriter(new FileWriter(outFile))) {
+                fout.write(text.toString());
+                fout.flush();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
         }
 
         return findFlag;

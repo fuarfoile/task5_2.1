@@ -90,9 +90,7 @@ class TokensRemover implements Callable<String[]>{
             e.printStackTrace();
         }
 
-        String[] strs = new String[resultArray.size()];
-        resultArray.toArray(strs);
-        return strs;
+        return resultArray.toArray(new String[0]);
     }
 
     boolean searchAndRemove(File file){
